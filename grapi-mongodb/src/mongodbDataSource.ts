@@ -7,7 +7,7 @@ import {
     paginate,
     PaginatedResponse,
     Where
-} from '@scalars/grapi'
+} from '@terabits/grapi'
 import { Db, ObjectId } from 'mongodb'
 
 import { first, get, isEmpty } from './lodash'
@@ -77,7 +77,7 @@ export class MongodbDataSource extends MongodbData implements DataSource {
     // ToOneRelation
     public async findOneByRelation( foreignKey: string, foreignId: string ): Promise<any> {
         // TODO Review if filter direct in mongo is Better
-        const data =  await this.findInCollection( { } )
+        const data = await this.findInCollection( {} )
         return first( filter( data, { [foreignKey]: { [Operator.eq]: foreignId } } ) )
     }
 

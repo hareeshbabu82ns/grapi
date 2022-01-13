@@ -2,10 +2,12 @@ import chai from 'chai'
 import chaiHttp = require( 'chai-http' );
 chai.use( chaiHttp )
 import { ApolloServer } from 'apollo-server-koa'
+import dotenv from 'dotenv'
 import { GraphQLScalarType } from 'graphql'
 import http from 'http'
 import Koa from 'koa'
 import { isArray, mapValues } from 'lodash'
+import path from 'path'
 
 import { MongodbDataSourceGroup } from '../../../grapi-mongodb/src/index'
 import { DataSource, Grapi } from '../../src'
@@ -24,7 +26,7 @@ export const createApp = ( { sdl, dataSources, scalars, }: {
     const httpServer = http.createServer( app.callback() )
     const requester = chai.request( httpServer ).keepOpen()
 
-    const graphqlRequest = async ( query, variables? ): Promise<any> => {
+    const graphqlRequest = async ( query, variables ): Promise<any> => {
         const request = requester
             .post( server.graphqlPath )
 
@@ -63,12 +65,16 @@ export const prepareConfig = (): any => {
     let mongoUri: string
     let serviceAccount: Record<string, any>
 
+    dotenv.config( {
+        path: path.resolve( process.cwd(), '.env.test' )
+    } )
+
     if ( process.env.CI ) {
         mongoUri = process.env.TEST_MONGODB_URI
         serviceAccount = JSON.parse( process.env.TEST_SERVICE_ACCOUNT )
     } else {
         // local dev
-        mongoUri = 'mongodb://localhost:27017'
+        mongoUri = process.env.TEST_MONGODB_URI || 'mongodb://localhost:27017'
         serviceAccount = {}
     }
 

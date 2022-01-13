@@ -6,14 +6,18 @@
 
 <br/>
 
+__Note: This is not production ready, please use original package [grapi](https://github.com/scalars/grapi)__
+
+<br/>
+
 ## MongoDB Data-Source
 
 ```shell
-yarn add @scalars/grapi-mongodb
+yarn add @terabits/grapi-mongodb
 ```
 Or
 ```shell
-npm install @scalars/grapi-mongodb
+npm install @terabits/grapi-mongodb
 ```
 
 ```graphql
@@ -42,8 +46,8 @@ type Vehicle @Model( dataSource: "datasource", key: "Vehicle" ) {
 // server.ts
 import { readFileSync } from 'fs'
 import { resolve } from 'path'
-import { MongodbDataSourceGroup } from '@scalars/grapi-mongodb'
-import { Grapi } from '@scalars/grapi'
+import { MongodbDataSourceGroup } from '@terabits/grapi-mongodb'
+import { Grapi } from '@terabits/grapi'
 import { ApolloServer } from 'apollo-server'
 
 const getDataSource = async () => {

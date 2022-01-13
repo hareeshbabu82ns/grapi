@@ -1,3 +1,6 @@
+.env
+.env.test
+.env.local
 
 # Created by https://www.toptal.com/developers/gitignore/api/webstorm,yarn,git,sonar,sonarqube,visualstudio
 # Edit at https://www.toptal.com/developers/gitignore?templates=webstorm,yarn,git,sonar,sonarqube,visualstudio

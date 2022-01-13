@@ -14,8 +14,8 @@ import {
     RelationWhereConfig,
     Where,
     WhereOperator
-} from '@scalars/grapi'
-import { FilterListObject } from '@scalars/grapi/lib/dataModel/type'
+} from '@terabits/grapi'
+import { FilterListObject } from '@terabits/grapi/lib/dataModel/type'
 import { Db, FilterQuery } from 'mongodb'
 
 import {
@@ -54,7 +54,7 @@ export class MongodbData {
             .toArray()
     }
 
-    public async findRecursive ( where: Record<string, any>, orderBy: OrderBy, pagination: Pagination, data: any[] = [] ): Promise<any[]> {
+    public async findRecursive( where: Record<string, any>, orderBy: OrderBy, pagination: Pagination, data: any[] = [] ): Promise<any[]> {
         let iteration: number = 0
         await iterateWhereFilter( where, async ( whereFilter: ( Record<string, RelationWhere> | Array<Record<string, RelationWhere>> ), operator: ( Operator | WhereOperator ) ) => {
             if ( operator as WhereOperator === WhereOperator.relation ) {
@@ -74,7 +74,7 @@ export class MongodbData {
                 }
                 if ( isEmpty( baseFilters ) === false || operator as any === WhereOperator.base || isEmpty( whereFilter ) ) {
                     const filters: any = isEmpty( baseFilters ) ? whereFilter : baseFilters
-                    const filterQuery: FilterQuery<any> =  this.whereToFilterQuery( filters, operator as Operator )
+                    const filterQuery: FilterQuery<any> = this.whereToFilterQuery( filters, operator as Operator )
                     data = await this.findInCollection( filterQuery, orderBy, isEmpty( relationFilters ) ? pagination : {} )
                     iteration = iteration + 1
                 }
@@ -82,7 +82,7 @@ export class MongodbData {
                     let baseFiltersOrAnd = []
                     forEach( relationFilters, ( item: RelationWhere ) => {
                         forEach( item, ( value: Record<string, any>, key: string ) => {
-                            if ( ! get( value, 'relation' ) ) {
+                            if ( !get( value, 'relation' ) ) {
                                 delete item[key]
                                 baseFiltersOrAnd.push( { [key]: value } )
                             }
@@ -112,11 +112,11 @@ export class MongodbData {
 
     public async executeRelationFilters( where: Record<string, RelationWhere>, data: any[], filtered: any[] = [] ): Promise<any[]> {
         for ( const item of data ) {
-            const filter: boolean = await iterateRelationsWhere( where,  async ( relationWhere: RelationWhere ): Promise<boolean> => {
+            const filter: boolean = await iterateRelationsWhere( where, async ( relationWhere: RelationWhere ): Promise<boolean> => {
                 const relation: RelationWhereConfig = relationWhere.relation
                 const relations: Record<string, RelationWhere> = {}
                 forEach( relationWhere.filters || {}, ( value: RelationWhere, key: string ) => {
-                    if ( value.relation ) { relations[ key ] = value }
+                    if ( value.relation ) { relations[key] = value }
                 } )
                 const { filters, targetKey } = relationWhere
                 const { list, ship, source, target, filter, foreignKey } = relation || {}
@@ -143,7 +143,7 @@ export class MongodbData {
                     }
                     let filterWhere: boolean
                     if ( filter === FilterListObject.SOME ) {
-                        filterWhere = ! isEmpty( relationData )
+                        filterWhere = !isEmpty( relationData )
                     } else if ( filter === FilterListObject.NONE ) {
                         filterWhere = isEmpty( relationData )
                     } else {
@@ -168,7 +168,7 @@ export class MongodbData {
                     }
 
                     if ( filterWhere && isEmpty( relations ) === false ) {
-                        const recursive: Array<any> = await  this.executeRelationFilters( relations, relationData )
+                        const recursive: Array<any> = await this.executeRelationFilters( relations, relationData )
                         return isEmpty( recursive ) === false
                     }
                     return filterWhere
@@ -184,21 +184,21 @@ export class MongodbData {
                             let status: boolean = false
                             iterateWhere( { id: filterId }, ( field, op, value ) => {
                                 switch ( op ) {
-                                case Operator.eq:
-                                    status = itemId === value
-                                    break
-                                case Operator.neq:
-                                    status = itemId !== value
-                                    break
+                                    case Operator.eq:
+                                        status = itemId === value
+                                        break
+                                    case Operator.neq:
+                                        status = itemId !== value
+                                        break
                                 }
                             } )
                             return status
                         }
-                        const filters = assign( { [ key ]: { eq: itemId } }, relationWhere.filters )
+                        const filters = assign( { [key]: { eq: itemId } }, relationWhere.filters )
                         relationData = await this.findOneRelation( relationWhere.targetKey, iterateBaseFilter( filters ) )
                     }
                     if ( relationData && isEmpty( relations ) === false ) {
-                        const recursiveFilter = await this.executeRelationFilters( relations, [ relationData ] )
+                        const recursiveFilter = await this.executeRelationFilters( relations, [relationData] )
                         return isEmpty( recursiveFilter ) === false
                     }
                     return relationData !== null
@@ -251,9 +251,9 @@ export class MongodbData {
         return await Promise.all(
             relationIds.map( id => {
                 const currentWhere = { ...where }
-                if ( ! has( currentWhere, `id.eq` ) ) {
+                if ( !has( currentWhere, `id.eq` ) ) {
                     currentWhere.id = { eq: id }
-                } else if ( ! includes( relationIds, get( currentWhere, `id.eq` ) ) ) {
+                } else if ( !includes( relationIds, get( currentWhere, `id.eq` ) ) ) {
                     return null
                 }
                 return this.findOneRelation( collection, currentWhere )
@@ -265,45 +265,45 @@ export class MongodbData {
         const filterQuery: Record<string, unknown> = {}
         const whereCallback = ( field: string, operator: Operator, value: any ): void => {
             switch ( operator ) {
-            case Operator.eq:
-                filterQuery[field] = value
-                break
-            case Operator.contains:
-                filterQuery[field] = new RegExp( `.*${value}.*`, `i` )
-                break
-            case Operator.notcontains:
-                filterQuery[field] = new RegExp( `^((?!${value}).)*$`, `i` )
-                break
-            case Operator.neq:
-                filterQuery[field] = { $ne: value }
-                break
-            case Operator.gt:
-                filterQuery[field] = { $gt: value }
-                break
-            case Operator.gte:
-                filterQuery[field] = { $gte: value }
-                break
-            case Operator.lt:
-                filterQuery[field] = { $lt: value }
-                break
-            case Operator.lte:
-                filterQuery[field] = { $lte: value }
-                break
-            case Operator.in:
-                filterQuery[field] = { $in: value }
-                break
-            case Operator.all:
-                filterQuery[field] = { $all: value }
-                break
-            case Operator.notIn:
-                filterQuery[field] = { $nin: value }
-                break
-            case Operator.between:
-                filterQuery[field] = { $gte: value.from, $lte: value.to }
-                break
-            case Operator.object:
-                assign( filterQuery, value )
-                break
+                case Operator.eq:
+                    filterQuery[field] = value
+                    break
+                case Operator.contains:
+                    filterQuery[field] = new RegExp( `.*${value}.*`, `i` )
+                    break
+                case Operator.notcontains:
+                    filterQuery[field] = new RegExp( `^((?!${value}).)*$`, `i` )
+                    break
+                case Operator.neq:
+                    filterQuery[field] = { $ne: value }
+                    break
+                case Operator.gt:
+                    filterQuery[field] = { $gt: value }
+                    break
+                case Operator.gte:
+                    filterQuery[field] = { $gte: value }
+                    break
+                case Operator.lt:
+                    filterQuery[field] = { $lt: value }
+                    break
+                case Operator.lte:
+                    filterQuery[field] = { $lte: value }
+                    break
+                case Operator.in:
+                    filterQuery[field] = { $in: value }
+                    break
+                case Operator.all:
+                    filterQuery[field] = { $all: value }
+                    break
+                case Operator.notIn:
+                    filterQuery[field] = { $nin: value }
+                    break
+                case Operator.between:
+                    filterQuery[field] = { $gte: value.from, $lte: value.to }
+                    break
+                case Operator.object:
+                    assign( filterQuery, value )
+                    break
             }
         }
         if ( isEmpty( where ) === false && ( operator === Operator.or || operator === Operator.and ) ) {
@@ -318,12 +318,12 @@ export class MongodbData {
                     }
                 }
             } )
-            filterQuery[ `$${toLower( operator )}` ] = filtersQuery
+            filterQuery[`$${toLower( operator )}`] = filtersQuery
         } else { iterateWhere( where, whereCallback ) }
         return filterQuery
     }
 
-    public findRecursiveOperator ( where: Where ): { operator?: Operator; filters?: any} {
+    public findRecursiveOperator( where: Where ): { operator?: Operator; filters?: any } {
         if ( get( where, Operator.or ) ) {
             return { operator: Operator.or, filters: get( where, Operator.or ) }
         } else if ( get( where, Operator.and ) ) {
@@ -343,25 +343,25 @@ export class MongodbData {
                     payload[fieldName] = value
                 }
             } else if ( operator == ArrayOperator.add ) {
-                payload.$addToSet = { ...payload.$addToSet, [ fieldName ]: { $each: value } }
+                payload.$addToSet = { ...payload.$addToSet, [fieldName]: { $each: value } }
             } else if ( operator == ArrayOperator.remove ) {
-                payload.$pull = { ...payload.$pull, [ fieldName ]: { $in: value } }
+                payload.$pull = { ...payload.$pull, [fieldName]: { $in: value } }
             }
         } )
         return payload
     };
 
-    public handleMongoDbError ( error ) {
+    public handleMongoDbError( error ) {
         if ( error.code === 11000 ) {
             const keyValues: string = values( error.keyValue ).join( ' ' )
             throw new Error(
-                `Constraint unique value "${ keyValues }" duplicate on ${ capitalize( this.collectionName ) } model`,
+                `Constraint unique value "${keyValues}" duplicate on ${capitalize( this.collectionName )} model`,
             )
         } else if ( error.code === 121 ) {
             throw new Error(
-                `Document failed validation on ${ capitalize( this.collectionName ) } model, review types or required values in data`,
+                `Document failed validation on ${capitalize( this.collectionName )} model, review types or required values in data`,
             )
         }
-        throw new Error( `${ error.message }` )
+        throw new Error( `${error.message}` )
     }
 }

@@ -10,7 +10,7 @@
     "clean": "lerna run clean --stream --parallel",
     "build": "lerna run build --stream --parallel",
     "lint": "yarn eslint --ext .ts .",
-    "test": "lerna run test --stream --scope @scalars/grapi",
+    "test": "lerna run test --stream --scope @terabits/grapi",
     "test:scope": "lerna run test --stream --parallel --scope $SCOPE -- --colors",
     "test:grep": "lerna run test:grep --stream --parallel --scope $SCOPE -- $FILE --colors ",
     "postinstall": "yarn run compile"
