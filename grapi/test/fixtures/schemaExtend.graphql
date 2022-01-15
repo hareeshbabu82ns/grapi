@@ -1,0 +1,16 @@
+scalar Url
+scalar Email
+scalar DateTime
+scalar Json
+
+enum STATUS {
+    OK
+    NOT_OK
+}
+
+type users @Model(dataSource: "memory", key: "users_extend"){
+    id: ID! @unique @autoGen
+    name: String!
+    age: Int
+    married: Boolean
+}

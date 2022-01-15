@@ -10,16 +10,17 @@ import { isArray, mapValues } from 'lodash'
 import path from 'path'
 
 import { MongodbDataSourceGroup } from '../../../grapi-mongodb/src/index'
-import { DataSource, Grapi } from '../../src'
+import { DataSource, Grapi, Plugin } from '../../src'
 
 export { MongodbDataSourceGroup }
 
-export const createApp = ( { sdl, dataSources, scalars, }: {
+export const createApp = ( { sdl, dataSources, scalars, plugins, }: {
     sdl: string;
     dataSources: Record<string, ( args: any ) => DataSource>;
     scalars?: Record<string, GraphQLScalarType>;
+    plugins?: Plugin[];
 } ) => {
-    const grapi = new Grapi( { sdl, dataSources, scalars } )
+    const grapi = new Grapi( { sdl, dataSources, scalars, plugins } )
     const server = new ApolloServer( grapi.createApolloConfig() )
     const app = new Koa()
     server.applyMiddleware( { app } )
@@ -52,11 +53,12 @@ export const createApp = ( { sdl, dataSources, scalars, }: {
     }
 }
 
-export const createGrapiApp = ( sdl: string, dataSources: Record<string, any> ): any => {
+export const createGrapiApp = ( sdl: string, dataSources: Record<string, any>, plugins?: Plugin[], ): any => {
     const { graphqlRequest, close } = createApp( {
         sdl,
         dataSources,
         scalars: {},
+        plugins
     } )
     return { graphqlRequest, close }
 }
