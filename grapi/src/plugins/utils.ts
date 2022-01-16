@@ -3,7 +3,7 @@ import EnumField from '../dataModel/enumField'
 import Field from '../dataModel/field'
 import ObjectField from '../dataModel/objectField'
 import { DataModelType } from '../dataModel/type'
-import { forEach, transform, upperFirst } from '../lodash'
+import { forEach, transform } from '../lodash'
 import { Context } from './interface'
 
 const graphqlType = ( field: Field ): string => {
@@ -33,7 +33,7 @@ const recursiveCreateType = ( fields: Record<string, Field>, context: Context ):
         if ( field instanceof ObjectField ) {
             // create type for nested object
             const typeFields = recursiveCreateType( field.getFields(), context )
-            const objectTypename = upperFirst( name )
+            const objectTypename = field.getTypename()
             root.addObjectType( `type ${objectTypename} { ${typeFields.join( ' ' )} }` )
         }
         let argumentsField = ``

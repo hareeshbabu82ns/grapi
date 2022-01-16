@@ -18,7 +18,7 @@ const fields = `
     lat
     lng
   }
-  note {
+  notes {
     title
     text
   }
@@ -49,7 +49,7 @@ const fakeUserData = ( data?: any ) => {
             lat: faker.address.latitude(),
             lng: faker.address.longitude(),
         },
-        note: [ { title: faker.lorem.slug( 10 ), text: faker.lorem.sentence( 100 ) } ],
+        notes: [ { title: faker.lorem.slug( 10 ), text: faker.lorem.sentence( 100 ) } ],
         ...data,
     }
 }
@@ -321,7 +321,7 @@ export function testSuits() {
             where: { id: createUser.id },
             data: {
                 username: faker.internet.userName(),
-                note: {
+                notes: {
                     set: [ { title: faker.lorem.slug( 10 ), text: faker.lorem.sentence( 100 ) } ],
                 },
             },
@@ -340,7 +340,7 @@ export function testSuits() {
       }
     ` )
         expect( certainUser.username ).to.deep.equal( updateUserVariables.data.username )
-        expect( certainUser.note ).to.eql( updateUserVariables.data.note.set )
+        expect( certainUser.notes ).to.eql( updateUserVariables.data.notes.set )
     } )
 
     it( 'should update with args', async () => {
