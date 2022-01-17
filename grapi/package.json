@@ -1,6 +1,6 @@
 {
   "name": "@terabits/grapi",
-  "version": "2.2.6",
+  "version": "2.2.7",
   "description": "Grapi Schema Generator For GraphQL Server",
   "keywords": [
     "grapi",

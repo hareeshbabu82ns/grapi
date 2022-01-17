@@ -278,6 +278,21 @@ type Movie @Model( dataSource: "datasource", key: "Movie" ) {
 }
 ```
 
+#### Many To Many ( Circular )
+```graphql
+# File schema.graphql
+type RelatedMoviesManyToMany implements Relation @config( 
+    name: "MoviesManyToMany"
+    isCircular: "true"
+)
+
+type Movie @Model( dataSource: "datasource", key: "Movie" ) {
+    id: ID ! @unique
+    title: String !
+    related: [ Movie ! ] ! @relation( with: RelatedMoviesManyToMany )
+}
+```
+
 ## Supported data-sources
 
 <div>

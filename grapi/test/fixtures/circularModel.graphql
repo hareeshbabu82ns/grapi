@@ -1,0 +1,12 @@
+
+type FriendRelation implements Relation @config( 
+  name: "FriendRelation"
+  isCircular: "true"
+)
+
+type User @Model(dataSource: "memory", key: "users") {
+  id: ID! @unique @autoGen
+  username: String!
+  # bi-*-to-* circular relation
+  friends: [User!] @relation( with: FriendRelation )
+}

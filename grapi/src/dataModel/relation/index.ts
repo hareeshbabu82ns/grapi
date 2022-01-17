@@ -96,6 +96,13 @@ export const createRelation = ( models: Model[] ): ModelRelation[] => {
                 // relationName not exist yet, but still looking for targetSide at later iteration
                 if ( !relationsWithName[relationName] ) {
                     relationsWithName[relationName] = { sourceSide: relationField }
+
+                    // circular relationship
+                    const isCircular: string = get( field.getRelationConfig(), 'isCircular' ) ||
+                        get( field.getMetadata( 'relation' ), 'isCircular' )
+                    if( isCircular === 'true' )
+                        relationsWithName[relationName].targetSide = relationField
+                        
                 } else if ( relationsWithName[relationName] ) {
                     relationsWithName[relationName].targetSide = relationField
                 }
