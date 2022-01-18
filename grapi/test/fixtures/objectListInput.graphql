@@ -1,0 +1,11 @@
+
+type Note {
+    language: String!
+    text: String!
+}
+
+type User @Model(dataSource: "memory", key: "users_object_list"){
+    id: ID! @unique @autoGen
+    name: String! @unique
+    notes: [ Note! ]!
+}

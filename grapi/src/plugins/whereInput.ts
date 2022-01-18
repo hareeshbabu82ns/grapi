@@ -1,6 +1,6 @@
 import { Operator, RelationWhere, Where } from '..'
 import { MODEL_DIRECTIVE, MODEL_DIRECTIVE_SOURCE_KEY } from '../constants'
-import { RelationField } from '../dataModel'
+import { ObjectField, RelationField } from '../dataModel'
 import Field from '../dataModel/field'
 import Model from '../dataModel/model'
 import { DataModelType, FilterListObject, FilterListScalar } from '../dataModel/type'
@@ -13,6 +13,7 @@ import { parseRelationConfig } from './utils'
 
 // constants
 const UNDERSCORE = '_'
+const DOUBLE_UNDERSCORE = '__'
 
 export default class WhereInputPlugin implements Plugin {
     public visitModel( model: Model, context: Context ): void {
@@ -76,7 +77,16 @@ export default class WhereInputPlugin implements Plugin {
             }
             let { operator } = WhereInputPlugin.getNameAndOperator( key )
             const { fieldName } = WhereInputPlugin.getNameAndOperator( key )
-            const field: RelationField = model.getField( fieldName ) as RelationField
+            let field: RelationField = model.getField( fieldName ) as RelationField
+            if ( !field && fieldName.includes( '.' ) ){ // SubObject fields
+                try{
+                    const subField:ObjectField = model.getField( fieldName.split( '.' )[0] ) as ObjectField
+                    const subFields = subField.getFields()
+                    field = subFields[fieldName.split( '.' )[1]] as RelationField
+                }catch( e ){
+                    throw new Error( `SubObject Field Where parsing failed ${fieldName} of ${ field.getTypename() }` )
+                }
+            }
             if ( field && field.getType() === DataModelType.RELATION ) {
                 const relationTo: Model = field.getRelationTo()
                 const metadataField: Record<string, any> = parseRelationConfig( field.getRelationConfig( ) )
@@ -133,6 +143,9 @@ export default class WhereInputPlugin implements Plugin {
     }
 
     private static getNameAndOperator( field: string ): {fieldName: string; operator: Operator; object?: string} {
+        // substitute '__' object name field name from 'obj__price_gt' to 'obj.price_gt'
+        field = field.replace( DOUBLE_UNDERSCORE, '.' )
+
         // split field name and operator from 'price_gt'
         const lastUnderscoreIndex = field.lastIndexOf( UNDERSCORE )
 
@@ -156,10 +169,12 @@ export default class WhereInputPlugin implements Plugin {
         return { fieldName, operator: validOperator }
     }
 
-    private createWhereFilter( root: RootNode, fields: Record<string, Field> ): string {
+    private createWhereFilter( root: RootNode, fields: Record<string, Field>, prefix: string = '' ): string {
         // create equals on scalar fields
         let inputFields: Array<{fieldName: string; type: string}> = []
+        const objectFilters: Array<string> = []
         forEach( fields, ( field, name ) => {
+            const fieldName : string = prefix + name
             const typeName: string = field.getTypename()
             if ( field.isList() ) {
                 switch ( field.getType() ) {
@@ -173,7 +188,7 @@ export default class WhereInputPlugin implements Plugin {
                         ${FilterListScalar.HASNOT}: [ ${typeName} ! ]
                     }` )
                     inputFields.push( {
-                        fieldName: name,
+                        fieldName: fieldName,
                         type: `FilterScalar${typeName}List`,
                     } )
                     break
@@ -182,7 +197,7 @@ export default class WhereInputPlugin implements Plugin {
                         ${FilterListScalar.HAS}: [ ${typeName} ! ]
                         ${FilterListScalar.HASNOT}: [ ${typeName} ! ]
                     }` )
-                    inputFields = WhereInputPlugin.createWhereFilterListCustomScalars( inputFields, typeName, name )
+                    inputFields = WhereInputPlugin.createWhereFilterListCustomScalars( inputFields, typeName, fieldName )
                     break
                 case DataModelType.RELATION:
                     root.addInput( `input Filter${typeName} { 
@@ -191,56 +206,65 @@ export default class WhereInputPlugin implements Plugin {
                         none: ${typeName}WhereInput 
                     }` )
                     inputFields.push( {
-                        fieldName: name,
+                        fieldName: fieldName,
                         type: `Filter${typeName}`,
                     } )
+                    break
+                case DataModelType.OBJECT:
+                    const objectFields = ( field as ObjectField ).getFields()
+                    objectFilters.push( this.createWhereFilter( root, objectFields, fieldName + DOUBLE_UNDERSCORE ) )
                     break
                 }
             } else {
                 switch ( field.getType() ) {
                 case DataModelType.STRING:
-                    inputFields.push( ...WhereInputPlugin.parseEqFilter( name, typeName ) )
-                    inputFields.push( ...WhereInputPlugin.parseContainsFilter( name, typeName ) )
-                    inputFields.push( ...WhereInputPlugin.parseInFilter( name, typeName ) )
+                    inputFields.push( ...WhereInputPlugin.parseEqFilter( fieldName, typeName ) )
+                    inputFields.push( ...WhereInputPlugin.parseContainsFilter( fieldName, typeName ) )
+                    inputFields.push( ...WhereInputPlugin.parseInFilter( fieldName, typeName ) )
                     break
                 case DataModelType.INT:
-                    inputFields.push( ...WhereInputPlugin.parseEqFilter( name, typeName ) )
-                    inputFields.push( ...WhereInputPlugin.parseGtLtInFilter( name, typeName ) )
+                    inputFields.push( ...WhereInputPlugin.parseEqFilter( fieldName, typeName ) )
+                    inputFields.push( ...WhereInputPlugin.parseGtLtInFilter( fieldName, typeName ) )
                     inputFields.push( {
-                        fieldName: `${name}_between`, type: inputIntBetweenName,
+                        fieldName: `${fieldName}_between`, type: inputIntBetweenName,
                     } )
                     break
                 case DataModelType.FLOAT:
-                    inputFields.push( ...WhereInputPlugin.parseEqFilter( name, typeName ) )
-                    inputFields.push( ...WhereInputPlugin.parseGtLtInFilter( name, typeName ) )
+                    inputFields.push( ...WhereInputPlugin.parseEqFilter( fieldName, typeName ) )
+                    inputFields.push( ...WhereInputPlugin.parseGtLtInFilter( fieldName, typeName ) )
                     inputFields.push( {
-                        fieldName: `${name}_between`, type: inputFloatBetweenName,
+                        fieldName: `${fieldName}_between`, type: inputFloatBetweenName,
                     } )
                     break
                 case DataModelType.ENUM:
-                    inputFields.push( ...WhereInputPlugin.parseEqFilter( name, typeName ) )
-                    inputFields.push( ...WhereInputPlugin.parseContainsFilter( name, 'String' ) )
+                    inputFields.push( ...WhereInputPlugin.parseEqFilter( fieldName, typeName ) )
+                    inputFields.push( ...WhereInputPlugin.parseContainsFilter( fieldName, 'String' ) )
                     break
                 case DataModelType.ID:
-                    inputFields.push( ...WhereInputPlugin.parseEqFilter( name, typeName ) )
-                    inputFields.push( ...WhereInputPlugin.parseInFilter( name, typeName ) )
+                    inputFields.push( ...WhereInputPlugin.parseEqFilter( fieldName, typeName ) )
+                    inputFields.push( ...WhereInputPlugin.parseInFilter( fieldName, typeName ) )
                     break
                 case DataModelType.BOOLEAN:
-                    inputFields.push( ...WhereInputPlugin.parseEqFilter( name, typeName ) )
+                    inputFields.push( ...WhereInputPlugin.parseEqFilter( fieldName, typeName ) )
                     break
                 case DataModelType.CUSTOM_SCALAR:
-                    inputFields = WhereInputPlugin.createWhereFilterCustomScalars( inputFields, typeName, name )
+                    inputFields = WhereInputPlugin.createWhereFilterCustomScalars( inputFields, typeName, fieldName )
                     break
                 case DataModelType.RELATION:
                     inputFields.push( {
-                        fieldName: name,
+                        fieldName: fieldName,
                         type: `${typeName}WhereInput`,
                     } )
+                    break
+                case DataModelType.OBJECT:
+                    const objectFields = ( field as ObjectField ).getFields()
+                    objectFilters.push( this.createWhereFilter( root, objectFields, fieldName + DOUBLE_UNDERSCORE ) )
                     break
                 }
             }
         } )
-        return inputFields.map( ( { fieldName, type } ) => `${fieldName}: ${type}` ).join( ' ' )
+        const iFieldsStr: string = inputFields.map( ( { fieldName, type } ) => `${fieldName}: ${type}` ).join( ' ' )
+        return `${iFieldsStr}  ${objectFilters}`
     }
 
     private static createWhereFilterListCustomScalars ( inputFields:  Array<{fieldName: string; type: string}>, typeName: string, name: string ): Array<{fieldName: string; type: string}> {

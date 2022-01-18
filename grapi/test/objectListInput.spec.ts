@@ -2,7 +2,7 @@ import chai from 'chai'
 import chaiHttp = require( 'chai-http' );
 chai.use( chaiHttp )
 
-import { sdl, testSuits } from './testsuites/scalarListInput'
+import { sdl, testSuits } from './testsuites/objectListInput'
 import { createGrapiApp, MongodbDataSourceGroup, prepareConfig } from './testsuites/utils'
 
 const { mongoUri } = prepareConfig()
@@ -11,25 +11,19 @@ const DB_NAME = 'grapi'
 const data = [
     {
         'name': 'Ben Bohm',
-        hobbies: { set: [ 'Video Games', 'Guitar', 'Bicycle' ] },
-        phones: { set: [ 1, 2, 3 ] },
-        friends: { set: [ { name: 'Jhon Doe' } ] }
+        notes: { set: [ { language: 'ENG', text:'ENG Ben' }, { language: 'DEU', text:'DEU Ben' } ] },
     },
     {
         'name': 'Wout Beckers',
-        hobbies: { set: [ 'Video Games', 'Guitar', 'Bicycle', 'Movies', 'Programming' ] },
-        phones: { set: [ 1, 2, 3, 45, 50, 100 ] },
-        friends: { set: [ { name: 'Maria Doe' }, { name: 'Jhon Doe' } ] }
+        notes: { set: [ { language: 'ENG', text:'ENG Wout' }, { language: 'DEU', text:'DEU Wout' } ] },
     },
     {
         'name': 'Michela Battaglia',
-        hobbies: { set: [ 'Video Games', 'Guitar', 'Bicycle' ] },
-        phones: { set: [ 1, 2, 3 ] },
-        friends: { set: [ { name: 'Fake Doe' } ] }
+        notes: { set: [ { language: 'ENG', text:'ENG Michela' }, { language: 'DEU', text:'DEU Michela' } ] },
     }
 ]
 
-describe( 'Tests on fixtures/scalarListInput.graphql mongodatasource', function() {
+describe( 'Tests on fixtures/objectListInput.graphql mongodatasource', function() {
     this.timeout( 20000 )
 
     before( async () => {

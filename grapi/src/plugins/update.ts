@@ -151,6 +151,8 @@ const createInputField = (
                 root.addInput(
                     `input ${listOperationInput} {
                         set: [${objectInputName}]
+                        add: [${objectInputName}]
+                        remove: [${objectInputName}]                        
                     }`
                 )
                 fieldType = listOperationInput
