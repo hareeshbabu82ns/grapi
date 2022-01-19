@@ -55,6 +55,10 @@ export function testSuits(): void {
             'book': { 'name': 'Book From Carlos Doe' } } ) ).to.be.true
     } )
     it( 'Should filter AND Users username plus ManyToMany Group name', async () => {
+        // const queryAll: string = `query {
+        //     allUsers: users ${ userData }
+        // }`
+        // const { allUsers } = await ( this as any ).graphqlRequest( queryAll )
         const query: string = `query ( $groups: FilterGroup ) {
             users(
                 where: {

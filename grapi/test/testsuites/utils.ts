@@ -20,9 +20,9 @@ export const createApp = ( { sdl, dataSources, scalars, plugins, }: {
     scalars?: Record<string, GraphQLScalarType>;
     plugins?: Plugin[];
 } ) => {
-    const grapi = new Grapi( { sdl, dataSources, scalars, plugins, skipPrint:false } )
+    const grapi = new Grapi( { sdl, dataSources, scalars, plugins, skipPrint:true } )
     const config = grapi.createApolloConfig()
-    console.dir( 'sdl: ', config.typeDefs )
+    // console.dir( 'sdl: ', config.typeDefs )
     const server = new ApolloServer( config )
     // const server = new ApolloServer( grapi.createApolloConfig() )
     const app = new Koa()

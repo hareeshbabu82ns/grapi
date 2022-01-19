@@ -1,5 +1,6 @@
 import chai from 'chai'
 import { readFileSync } from 'fs'
+import { some } from 'lodash'
 import path from 'path'
 const expect = chai.expect
 
@@ -24,6 +25,26 @@ const updateBen = `mutation (
 export const sdl = readFileSync( path.resolve( __dirname, '../fixtures/scalarListInput.graphql' ), { encoding: 'utf8' } )
 
 export function testSuits() {
+
+    it( 'List Scalar: should pass `gt`, `gte`, `lt`, `lte` and `size` filters', async ()  => {
+        // gt filter
+        const getUsers = `
+        query ($where: UserWhereInput!) {
+          users( where: $where) { ${userFields} }
+        }`
+        let getUsersVariables: any = { where: { phones:  { gt:50 } } }
+        let res = await ( this as any ).graphqlRequest( getUsers, getUsersVariables )
+        // console.log( JSON.stringify( res, null, 2 ) )
+        expect( res.users ).with.lengthOf( 1 )
+        expect( some( res.users, { name: 'Wout Beckers' } ) ).to.be.true
+      
+        // size filter
+        getUsersVariables = { where: { hobbies:  { size:3 } } }  // get array with size == 3
+        res = await ( this as any ).graphqlRequest( getUsers, getUsersVariables )
+        // console.log( JSON.stringify( res, null, 2 ) )
+        expect( res.users ).with.lengthOf( 2 )
+        expect( some( res.users, { name: 'Wout Beckers' } ) ).to.be.false        
+    } )
 
     it( 'Should pass "add" int, string and json list', async ()  => {
         const updateBenVariables = {
@@ -60,4 +81,6 @@ export function testSuits() {
             friends: [ { name: 'Maria Doe' } ]
         } )
     } )
+
+
 }

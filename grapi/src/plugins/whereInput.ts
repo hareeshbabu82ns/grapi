@@ -75,7 +75,7 @@ export default class WhereInputPlugin implements Plugin {
                 } )
                 return { [ key as Operator ]: value }
             }
-            let { operator } = WhereInputPlugin.getNameAndOperator( key )
+            const { operator } = WhereInputPlugin.getNameAndOperator( key )
             const { fieldName } = WhereInputPlugin.getNameAndOperator( key )
             let field: RelationField = model.getField( fieldName ) as RelationField
             if ( !field && fieldName.includes( '.' ) ){ // SubObject fields
@@ -129,13 +129,39 @@ export default class WhereInputPlugin implements Plugin {
                 if ( size( value ) > 1 ) {
                     throw new Error( `There can be only one input field named Filter${ field.getTypename() }` )
                 }
-                const { has, hasNot } = value
-                if ( has ) {
-                    operator = Operator.all
-                } else {
-                    operator = Operator.notIn
-                }
-                value = has || hasNot || []
+                const resValue = {}
+                forEach( value, ( value, filter ) => {
+                    let op = ''
+                    let val:any = value
+                    switch( filter ){
+                    case FilterListScalar.HAS:
+                        op = Operator.all
+                        val = value || []
+                        break
+                    case FilterListScalar.HASNOT:
+                        op = Operator.notIn
+                        val = value || []
+                        break
+                    case FilterListScalar.GT:
+                        op = Operator.gt
+                        break
+                    case FilterListScalar.GTE:
+                        op = Operator.gte
+                        break
+                    case FilterListScalar.LT:
+                        op = Operator.lt
+                        break
+                    case FilterListScalar.LTE:
+                        op = Operator.lte
+                        break
+                    case FilterListScalar.SIZE:
+                        op = Operator.size
+                        break
+                    }
+                    resValue[op] = val
+                } )
+                result[ fieldName ] = resValue
+                return result
             }
             result[ fieldName ] = { [ operator ]: value }
             return result
@@ -178,14 +204,29 @@ export default class WhereInputPlugin implements Plugin {
             const typeName: string = field.getTypename()
             if ( field.isList() ) {
                 switch ( field.getType() ) {
-                case DataModelType.STRING:
                 case DataModelType.INT:
                 case DataModelType.FLOAT:
+                    root.addInput( `input FilterScalar${typeName}List { 
+                                ${FilterListScalar.HAS}: [ ${typeName} ! ]
+                                ${FilterListScalar.HASNOT}: [ ${typeName} ! ]
+                                ${FilterListScalar.GT}: ${typeName}
+                                ${FilterListScalar.GTE}: ${typeName}
+                                ${FilterListScalar.LT}: ${typeName}
+                                ${FilterListScalar.LTE}: ${typeName}
+                                ${FilterListScalar.SIZE}: Int
+                            }` )
+                    inputFields.push( {
+                        fieldName: fieldName,
+                        type: `FilterScalar${typeName}List`,
+                    } )
+                    break
                 case DataModelType.ENUM:
+                case DataModelType.STRING:
                 case DataModelType.ID:
                     root.addInput( `input FilterScalar${typeName}List { 
                         ${FilterListScalar.HAS}: [ ${typeName} ! ]
                         ${FilterListScalar.HASNOT}: [ ${typeName} ! ]
+                        ${FilterListScalar.SIZE}: Int
                     }` )
                     inputFields.push( {
                         fieldName: fieldName,

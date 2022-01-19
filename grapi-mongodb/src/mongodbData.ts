@@ -184,12 +184,12 @@ export class MongodbData {
                             let status: boolean = false
                             iterateWhere( { id: filterId }, ( field, op, value ) => {
                                 switch ( op ) {
-                                    case Operator.eq:
-                                        status = itemId === value
-                                        break
-                                    case Operator.neq:
-                                        status = itemId !== value
-                                        break
+                                case Operator.eq:
+                                    status = itemId === value
+                                    break
+                                case Operator.neq:
+                                    status = itemId !== value
+                                    break
                                 }
                             } )
                             return status
@@ -198,7 +198,7 @@ export class MongodbData {
                         relationData = await this.findOneRelation( relationWhere.targetKey, iterateBaseFilter( filters ) )
                     }
                     if ( relationData && isEmpty( relations ) === false ) {
-                        const recursiveFilter = await this.executeRelationFilters( relations, [relationData] )
+                        const recursiveFilter = await this.executeRelationFilters( relations, [ relationData ] )
                         return isEmpty( recursiveFilter ) === false
                     }
                     return relationData !== null
@@ -265,45 +265,48 @@ export class MongodbData {
         const filterQuery: Record<string, unknown> = {}
         const whereCallback = ( field: string, operator: Operator, value: any ): void => {
             switch ( operator ) {
-                case Operator.eq:
-                    filterQuery[field] = value
-                    break
-                case Operator.contains:
-                    filterQuery[field] = new RegExp( `.*${value}.*`, `i` )
-                    break
-                case Operator.notcontains:
-                    filterQuery[field] = new RegExp( `^((?!${value}).)*$`, `i` )
-                    break
-                case Operator.neq:
-                    filterQuery[field] = { $ne: value }
-                    break
-                case Operator.gt:
-                    filterQuery[field] = { $gt: value }
-                    break
-                case Operator.gte:
-                    filterQuery[field] = { $gte: value }
-                    break
-                case Operator.lt:
-                    filterQuery[field] = { $lt: value }
-                    break
-                case Operator.lte:
-                    filterQuery[field] = { $lte: value }
-                    break
-                case Operator.in:
-                    filterQuery[field] = { $in: value }
-                    break
-                case Operator.all:
-                    filterQuery[field] = { $all: value }
-                    break
-                case Operator.notIn:
-                    filterQuery[field] = { $nin: value }
-                    break
-                case Operator.between:
-                    filterQuery[field] = { $gte: value.from, $lte: value.to }
-                    break
-                case Operator.object:
-                    assign( filterQuery, value )
-                    break
+            case Operator.eq:
+                filterQuery[field] = value
+                break
+            case Operator.contains:
+                filterQuery[field] = new RegExp( `.*${value}.*`, `i` )
+                break
+            case Operator.notcontains:
+                filterQuery[field] = new RegExp( `^((?!${value}).)*$`, `i` )
+                break
+            case Operator.neq:
+                filterQuery[field] = { $ne: value }
+                break
+            case Operator.gt:
+                filterQuery[field] = { $gt: value }
+                break
+            case Operator.gte:
+                filterQuery[field] = { $gte: value }
+                break
+            case Operator.lt:
+                filterQuery[field] = { $lt: value }
+                break
+            case Operator.lte:
+                filterQuery[field] = { $lte: value }
+                break
+            case Operator.in:
+                filterQuery[field] = { $in: value }
+                break
+            case Operator.all:
+                filterQuery[field] = { $all: value }
+                break
+            case Operator.notIn:
+                filterQuery[field] = { $nin: value }
+                break
+            case Operator.between:
+                filterQuery[field] = { $gte: value.from, $lte: value.to }
+                break
+            case Operator.size:
+                filterQuery[field] = { $size: value }
+                break
+            case Operator.object:
+                assign( filterQuery, value )
+                break
             }
         }
         if ( isEmpty( where ) === false && ( operator === Operator.or || operator === Operator.and ) ) {

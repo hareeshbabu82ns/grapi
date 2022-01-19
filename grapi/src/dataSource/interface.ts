@@ -42,7 +42,8 @@ export enum Operator {
     between = 'between',
     or = 'OR',
     and = 'AND',
-    object = 'object'
+    object = 'object',
+    size = 'size',
 }
 
 export enum WhereOperator {
