@@ -30,9 +30,10 @@ import {
     includes,
     isEmpty,
     isEqual,
+    isObject,
     toLower,
     uniqWith,
-    values
+    values,
 } from './lodash'
 
 export class MongodbData {
@@ -311,6 +312,21 @@ export class MongodbData {
                     assign( matchQuery, whereOperatorToValue( key, val ) )
                 } )
                 resValue = { $elemMatch: matchQuery }
+                break
+            case Operator.elementMatchObject:
+                const matchQueryObj = {}
+                forEach( value, ( valObj, keyObj )=>{
+                    let matchQuery = {}
+                    forEach( valObj, ( val, key:Operator )=>{
+                        const res = whereOperatorToValue( key, val )
+                        if( isObject( res ) )
+                            assign( matchQuery, res )
+                        else
+                            matchQuery = res
+                    } )
+                    matchQueryObj[keyObj] = matchQuery
+                } )
+                resValue = { $elemMatch: matchQueryObj }
                 break
             }
             return resValue

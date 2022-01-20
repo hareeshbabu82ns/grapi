@@ -11,15 +11,15 @@ const DB_NAME = 'grapi'
 const data = [
     {
         'name': 'Ben Bohm',
-        notes: { set: [ { language: 'ENG', text:'ENG Ben' }, { language: 'DEU', text:'DEU Ben' } ] },
+        notes: { set: [ { language: 'ENG', text:'ENG Ben', score: 5 }, { language: 'DEU', text:'DEU Ben', score: 15 } ] },
     },
     {
         'name': 'Wout Beckers',
-        notes: { set: [ { language: 'ENG', text:'ENG Wout' }, { language: 'DEU', text:'DEU Wout' } ] },
+        notes: { set: [ { language: 'ENG', text:'ENG Wout', score: 5 }, { language: 'DEU', text:'DEU Wout', score: 30 } ] },
     },
     {
         'name': 'Michela Battaglia',
-        notes: { set: [ { language: 'ENG', text:'ENG Michela' }, { language: 'DEU', text:'DEU Michela' } ] },
+        notes: { set: [ { language: 'ENG', text:'ENG Michela', score: 60 }, { language: 'DEU', text:'DEU Michela', score: 35 } ] },
     }
 ]
 

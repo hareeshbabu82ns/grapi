@@ -77,16 +77,7 @@ export default class WhereInputPlugin implements Plugin {
             }
             const { operator } = WhereInputPlugin.getNameAndOperator( key )
             const { fieldName } = WhereInputPlugin.getNameAndOperator( key )
-            let field: RelationField = model.getField( fieldName ) as RelationField
-            if ( !field && fieldName.includes( '.' ) ){ // SubObject fields
-                try{
-                    const subField:ObjectField = model.getField( fieldName.split( '.' )[0] ) as ObjectField
-                    const subFields = subField.getFields()
-                    field = subFields[fieldName.split( '.' )[1]] as RelationField
-                }catch( e ){
-                    throw new Error( `SubObject Field Where parsing failed ${fieldName} of ${ field.getTypename() }` )
-                }
-            }
+            const field: RelationField = model.getField( fieldName ) as RelationField
             if ( field && field.getType() === DataModelType.RELATION ) {
                 const relationTo: Model = field.getRelationTo()
                 const metadataField: Record<string, any> = parseRelationConfig( field.getRelationConfig( ) )
@@ -125,46 +116,28 @@ export default class WhereInputPlugin implements Plugin {
             if ( result[fieldName] ) {
                 throw new Error( `There can be only one input field named ${ fieldName }_${ operator }` )
             }
+            if ( field && field.getType() === DataModelType.OBJECT ) {
+                forEach( value, ( val, key )=>{
+                    const { operator } = WhereInputPlugin.getNameAndOperator( key )
+                    const { fieldName:subFieldName } = WhereInputPlugin.getNameAndOperator( key )
+                    if( key === FilterListScalar.ELEMENT_MATCH ){
+                        const emResult = {}
+                        forEach( val, ( val, key )=>{
+                            const { operator } = WhereInputPlugin.getNameAndOperator( key )
+                            const { fieldName } = WhereInputPlugin.getNameAndOperator( key )
+                            emResult[fieldName] = { [operator]:val }
+                        } )
+                        result[fieldName] = { [FilterListObject.ELEMENT_MATCH]: emResult }
+                    }else
+                        result[ `${fieldName}.${subFieldName}` ] = { [ operator ]: val }
+                } )
+                return result
+            }
             if ( field.isList() ) {
                 if ( size( value ) > 1 ) {
                     throw new Error( `There can be only one input field named Filter${ field.getTypename() }` )
                 }
-                const resValue = {}
-                forEach( value, ( value, filter ) => {
-                    let op = ''
-                    let val:any = value
-                    switch( filter ){
-                    case FilterListScalar.HAS:
-                        op = Operator.all
-                        val = value || []
-                        break
-                    case FilterListScalar.HASNOT:
-                        op = Operator.notIn
-                        val = value || []
-                        break
-                    case FilterListScalar.GT:
-                        op = Operator.gt
-                        break
-                    case FilterListScalar.GTE:
-                        op = Operator.gte
-                        break
-                    case FilterListScalar.LT:
-                        op = Operator.lt
-                        break
-                    case FilterListScalar.LTE:
-                        op = Operator.lte
-                        break
-                    case FilterListScalar.SIZE:
-                        op = Operator.size
-                        break
-                    case FilterListScalar.ELEMENT_MATCH:
-                        op = Operator.elementMatch
-                        val = this.parseFilterListScalar( val )
-                        break
-                    }
-                    resValue[op] = val
-                } )
-                result[ fieldName ] = resValue
+                result[ fieldName ] = this.parseFilterListScalar( value )
                 return result
             }
             result[ fieldName ] = { [ operator ]: value }
@@ -304,7 +277,17 @@ export default class WhereInputPlugin implements Plugin {
                     break
                 case DataModelType.OBJECT:
                     const objectFields = ( field as ObjectField ).getFields()
-                    objectFilters.push( this.createWhereFilter( root, objectFields, fieldName + DOUBLE_UNDERSCORE ) )
+                    root.addInput( `input FilterObject${typeName}ElementMatch {
+                        ${this.createWhereFilter( root, objectFields )}
+                    }` )                    
+                    root.addInput( `input FilterObject${typeName}List {
+                        ${this.createWhereFilter( root, objectFields )}
+                        ${FilterListScalar.ELEMENT_MATCH}: FilterObject${typeName}ElementMatch
+                    }` )
+                    inputFields.push( {
+                        fieldName: fieldName,
+                        type: `FilterObject${typeName}List`,
+                    } )
                     break
                 }
             } else {
@@ -350,7 +333,14 @@ export default class WhereInputPlugin implements Plugin {
                     break
                 case DataModelType.OBJECT:
                     const objectFields = ( field as ObjectField ).getFields()
-                    objectFilters.push( this.createWhereFilter( root, objectFields, fieldName + DOUBLE_UNDERSCORE ) )
+                    // objectFilters.push( this.createWhereFilter( root, objectFields, fieldName + DOUBLE_UNDERSCORE ) )
+                    root.addInput( `input FilterObject${typeName}List {
+                        ${this.createWhereFilter( root, objectFields )}
+                    }` )
+                    inputFields.push( {
+                        fieldName: fieldName,
+                        type: `FilterObject${typeName}List`,
+                    } )                    
                     break
                 }
             }

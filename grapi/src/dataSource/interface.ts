@@ -45,6 +45,7 @@ export enum Operator {
     object = 'object',
     size = 'size',
     elementMatch = 'elementMatch',
+    elementMatchObject = 'elementMatchObject',
 }
 
 export enum WhereOperator {

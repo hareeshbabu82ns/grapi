@@ -1,6 +1,6 @@
 {
   "name": "@terabits/grapi-mongodb",
-  "version": "2.2.8",
+  "version": "2.2.9",
   "description": "The mongodb package of Grapi",
   "main": "./lib/index.js",
   "module": "./lib/index.js",
@@ -35,7 +35,7 @@
   "author": "Hareesh",
   "license": "Apache-2.0",
   "dependencies": {
-    "@terabits/grapi": "^2.2.10",
+    "@terabits/grapi": "^2.2.11",
     "mongodb": "^3.6.9",
     "mongodb-client-encryption": "^1.2.4"
   },

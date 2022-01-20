@@ -2,6 +2,7 @@
 type Note {
     language: String!
     text: String!
+    score: Int!
 }
 
 type User @Model(dataSource: "memory", key: "users_object_list"){

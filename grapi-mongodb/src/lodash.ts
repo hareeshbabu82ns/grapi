@@ -11,6 +11,7 @@ import includes from 'lodash/includes'
 import isEmpty from 'lodash/isEmpty'
 import isEqual from 'lodash/isEqual'
 import isNil from 'lodash/isNil'
+import isObject from 'lodash/isObject'
 import toLower from 'lodash/toLower'
 import uniqWith from 'lodash/uniqWith'
 import values from 'lodash/values'
@@ -30,7 +31,8 @@ export {
     isEmpty,
     isEqual,
     isNil,
+    isObject,
     toLower,
     uniqWith,
-    values
+    values,
 }

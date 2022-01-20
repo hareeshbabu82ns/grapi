@@ -1,7 +1,8 @@
 export const enum FilterListObject {
     SOME= 'some',
     NONE = 'none',
-    EVERY = 'every'
+    EVERY = 'every',
+    ELEMENT_MATCH = 'elementMatchObject',
 }
 
 export const enum FilterListScalar {
