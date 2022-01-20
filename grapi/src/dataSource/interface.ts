@@ -44,6 +44,7 @@ export enum Operator {
     and = 'AND',
     object = 'object',
     size = 'size',
+    elementMatch = 'elementMatch',
 }
 
 export enum WhereOperator {

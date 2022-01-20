@@ -157,6 +157,10 @@ export default class WhereInputPlugin implements Plugin {
                     case FilterListScalar.SIZE:
                         op = Operator.size
                         break
+                    case FilterListScalar.ELEMENT_MATCH:
+                        op = Operator.elementMatch
+                        val = this.parseFilterListScalar( val )
+                        break
                     }
                     resValue[op] = val
                 } )
@@ -166,6 +170,45 @@ export default class WhereInputPlugin implements Plugin {
             result[ fieldName ] = { [ operator ]: value }
             return result
         }, {} as any )
+    }
+
+    private static parseFilterListScalar( where:Record<string, any> ):Record<string, any>{
+        const resValue = {}
+        forEach( where, ( value, filter ) => {
+            let op = ''
+            let val:any = value
+            switch( filter ){
+            case FilterListScalar.HAS:
+                op = Operator.all
+                val = value || []
+                break
+            case FilterListScalar.HASNOT:
+                op = Operator.notIn
+                val = value || []
+                break
+            case FilterListScalar.GT:
+                op = Operator.gt
+                break
+            case FilterListScalar.GTE:
+                op = Operator.gte
+                break
+            case FilterListScalar.LT:
+                op = Operator.lt
+                break
+            case FilterListScalar.LTE:
+                op = Operator.lte
+                break
+            case FilterListScalar.SIZE:
+                op = Operator.size
+                break
+            case FilterListScalar.ELEMENT_MATCH:
+                op = Operator.elementMatch
+                val = this.parseFilterListScalar( val )
+                break
+            }
+            resValue[op] = val
+        } )
+        return resValue
     }
 
     private static getNameAndOperator( field: string ): {fieldName: string; operator: Operator; object?: string} {
@@ -206,6 +249,13 @@ export default class WhereInputPlugin implements Plugin {
                 switch ( field.getType() ) {
                 case DataModelType.INT:
                 case DataModelType.FLOAT:
+                    // TODO: remove unwanted items from ELEMENT_MATCH (like HAS, HASNOT, SIZE ...)
+                    root.addInput( `input FilterScalar${typeName}ElementMatch {
+                        ${FilterListScalar.GT}: ${typeName}
+                        ${FilterListScalar.GTE}: ${typeName}
+                        ${FilterListScalar.LT}: ${typeName}
+                        ${FilterListScalar.LTE}: ${typeName}
+                    }` )
                     root.addInput( `input FilterScalar${typeName}List { 
                                 ${FilterListScalar.HAS}: [ ${typeName} ! ]
                                 ${FilterListScalar.HASNOT}: [ ${typeName} ! ]
@@ -214,6 +264,7 @@ export default class WhereInputPlugin implements Plugin {
                                 ${FilterListScalar.LT}: ${typeName}
                                 ${FilterListScalar.LTE}: ${typeName}
                                 ${FilterListScalar.SIZE}: Int
+                                ${FilterListScalar.ELEMENT_MATCH}: FilterScalar${typeName}ElementMatch
                             }` )
                     inputFields.push( {
                         fieldName: fieldName,

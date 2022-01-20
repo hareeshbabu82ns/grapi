@@ -263,50 +263,65 @@ export class MongodbData {
 
     public whereToFilterQuery( where: Where, operator: Operator = undefined ): FilterQuery<Record<string, any>> {
         const filterQuery: Record<string, unknown> = {}
-        const whereCallback = ( field: string, operator: Operator, value: any ): void => {
+        const whereOperatorToValue = ( operator:Operator, value:any ): any => {
+            let resValue: any
             switch ( operator ) {
             case Operator.eq:
-                filterQuery[field] = value
+                resValue = value
                 break
             case Operator.contains:
-                filterQuery[field] = new RegExp( `.*${value}.*`, `i` )
+                resValue = new RegExp( `.*${value}.*`, `i` )
                 break
             case Operator.notcontains:
-                filterQuery[field] = new RegExp( `^((?!${value}).)*$`, `i` )
+                resValue = new RegExp( `^((?!${value}).)*$`, `i` )
                 break
             case Operator.neq:
-                filterQuery[field] = { $ne: value }
+                resValue = { $ne: value }
                 break
             case Operator.gt:
-                filterQuery[field] = { $gt: value }
+                resValue = { $gt: value }
                 break
             case Operator.gte:
-                filterQuery[field] = { $gte: value }
+                resValue = { $gte: value }
                 break
             case Operator.lt:
-                filterQuery[field] = { $lt: value }
+                resValue = { $lt: value }
                 break
             case Operator.lte:
-                filterQuery[field] = { $lte: value }
+                resValue = { $lte: value }
                 break
             case Operator.in:
-                filterQuery[field] = { $in: value }
+                resValue = { $in: value }
                 break
             case Operator.all:
-                filterQuery[field] = { $all: value }
+                resValue = { $all: value }
                 break
             case Operator.notIn:
-                filterQuery[field] = { $nin: value }
+                resValue = { $nin: value }
                 break
             case Operator.between:
-                filterQuery[field] = { $gte: value.from, $lte: value.to }
+                resValue = { $gte: value.from, $lte: value.to }
                 break
             case Operator.size:
-                filterQuery[field] = { $size: value }
+                resValue = { $size: value }
                 break
+            case Operator.elementMatch:
+                const matchQuery = {}
+                forEach( value, ( val, key:Operator )=>{
+                    assign( matchQuery, whereOperatorToValue( key, val ) )
+                } )
+                resValue = { $elemMatch: matchQuery }
+                break
+            }
+            return resValue
+        }
+        const whereCallback = ( field: string, operator: Operator, value: any ): void => {
+            switch( operator ) {
             case Operator.object:
                 assign( filterQuery, value )
                 break
+            default:
+                filterQuery[field] = whereOperatorToValue( operator, value )
             }
         }
         if ( isEmpty( where ) === false && ( operator === Operator.or || operator === Operator.and ) ) {

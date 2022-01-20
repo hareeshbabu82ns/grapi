@@ -46,6 +46,26 @@ export function testSuits() {
         expect( some( res.users, { name: 'Wout Beckers' } ) ).to.be.false        
     } )
 
+    it( 'List Scalar: should pass `elementMatch` filters', async ()  => {
+
+        const getUsers = `
+        query ($where: UserWhereInput!) {
+          users( where: $where) { ${userFields} }
+        }`
+        const getUsersVariables: any = { where: { phones:  { elementMatch: { gt:50, lte:100 } } } }
+        const res = await ( this as any ).graphqlRequest( getUsers, getUsersVariables )
+        // console.log( JSON.stringify( res, null, 2 ) )
+        expect( res.users ).with.lengthOf( 1 )
+        expect( some( res.users, { name: 'Wout Beckers' } ) ).to.be.true
+
+        // getUsersVariables = { where: { phones:  { elementMatch: { neq: 3 } } } }
+        // res = await ( this as any ).graphqlRequest( getUsers, getUsersVariables )
+        // // console.log( JSON.stringify( res, null, 2 ) )
+        // expect( res.users ).with.lengthOf( 2 )
+        // expect( some( res.users, { name: 'Wout Beckers' } ) ).to.be.false
+             
+    } )
+
     it( 'Should pass "add" int, string and json list', async ()  => {
         const updateBenVariables = {
             where: { name: userName  },

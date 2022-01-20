@@ -7,12 +7,13 @@ export const enum FilterListObject {
 export const enum FilterListScalar {
     HAS= 'has',
     HASNOT = 'hasNot',
+    EQ = 'eq',
     GT = 'gt',
     GTE = 'gte',
     LT = 'lt',
     LTE = 'lte',
     SIZE = 'size',
-    // ELEMENT_MATCH = 'elemMatch',  // TODO:
+    ELEMENT_MATCH = 'elementMatch',
 }
 
 export enum DirectiveModelAction {
